@@ -12,6 +12,7 @@ from pathlib import Path
 import joblib
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
 
 # --------------------------------------------------------------------------- #
@@ -21,6 +22,7 @@ BASE_DIR = Path(__file__).resolve().parent
 RUTA_MODELO = BASE_DIR / "models" / "modelo_final.pkl"
 RUTA_METRICAS = BASE_DIR / "models" / "model_metadata.json"
 RUTA_DATOS = BASE_DIR / "data" / "processed" / "dataset_limpio.csv"
+RUTA_GEOJSON = BASE_DIR / "data" / "antioquia_municipios.geojson"
 
 # Orden lógico de los niveles de desempeño (para gráficas consistentes)
 ORDEN_NIVELES = ["Bajo", "Medio", "Alto"]
@@ -68,6 +70,13 @@ def cargar_metricas():
 def cargar_datos():
     """Lee el dataset procesado."""
     return pd.read_csv(RUTA_DATOS)
+
+
+@st.cache_data
+def cargar_geojson():
+    """Carga el geojson con los límites de los municipios de Antioquia."""
+    with open(RUTA_GEOJSON, "r", encoding="utf-8") as f:
+        return json.load(f)
 
 
 # Cargamos los tres recursos
@@ -197,6 +206,77 @@ with tab_eda:
         height=max(400, 22 * len(pct_bajo)),
     )
     st.plotly_chart(fig3, use_container_width=True)
+
+    # --- Mapa: prioridad de refuerzo por municipio ------------------------ #
+    # Usa SIEMPRE todos los municipios (independiente del filtro).
+    st.subheader("4. Mapa de prioridad por municipio")
+
+    geojson = cargar_geojson()
+
+    # % de estudiantes con desempeño "Bajo" y número de estudiantes por municipio.
+    # Agrupamos por código y nombre del municipio.
+    df_muni = (
+        df.groupby(["cole_cod_mcpio_ubicacion", "cole_mcpio_ubicacion"])
+        .agg(
+            n_estudiantes=("desempeno_global", "size"),
+            pct_bajo=("desempeno_global", lambda s: (s == "Bajo").mean() * 100),
+        )
+        .reset_index()
+    )
+
+    # Código en formato de 5 dígitos con cero a la izquierda para que coincida
+    # con la propiedad 'cod_mpio' del geojson.
+    df_muni["cod_5"] = df_muni["cole_cod_mcpio_ubicacion"].apply(
+        lambda c: str(int(c)).zfill(5)
+    )
+
+    # Capa coloreada: solo los municipios que tienen datos en el CSV.
+    fig_mapa = px.choropleth(
+        df_muni,
+        geojson=geojson,
+        locations="cod_5",
+        featureidkey="properties.cod_mpio",
+        color="pct_bajo",
+        color_continuous_scale="RdYlGn_r",  # rojo = más % Bajo = más prioridad
+        hover_name="cole_mcpio_ubicacion",
+        hover_data={"pct_bajo": ":.1f", "n_estudiantes": True, "cod_5": False},
+        labels={"pct_bajo": "% Bajo", "n_estudiantes": "N° estudiantes"},
+        title="Prioridad de refuerzo por municipio (% de desempeño Bajo)",
+    )
+
+    # Capa base gris: TODOS los municipios del geojson, para que se dibuje
+    # la forma completa de Antioquia. Los que no tienen datos quedan en gris
+    # con la etiqueta "Sin datos".
+    todos_codigos = [f["properties"]["cod_mpio"] for f in geojson["features"]]
+    todos_nombres = [f["properties"]["municipio"] for f in geojson["features"]]
+    capa_base = go.Choropleth(
+        geojson=geojson,
+        locations=todos_codigos,
+        featureidkey="properties.cod_mpio",
+        z=[0] * len(todos_codigos),                 # valor constante (gris uniforme)
+        colorscale=[[0, "#d9d9d9"], [1, "#d9d9d9"]],
+        showscale=False,                            # sin barra de color para esta capa
+        marker_line_color="white",
+        marker_line_width=0.5,
+        hovertext=[f"{n}<br>Sin datos" for n in todos_nombres],
+        hoverinfo="text",
+        name="Sin datos",
+    )
+    fig_mapa.add_trace(capa_base)
+    # La capa base debe quedar debajo de la coloreada (se dibuja primero).
+    fig_mapa.data = (fig_mapa.data[-1], fig_mapa.data[0])
+
+    # Ajustamos el encuadre a todos los municipios y ocultamos el mapa base.
+    fig_mapa.update_geos(fitbounds="locations", visible=False)
+    fig_mapa.update_coloraxes(colorbar_title="% Bajo")
+    fig_mapa.update_layout(height=600)
+    st.plotly_chart(fig_mapa, use_container_width=True)
+
+    st.caption(
+        "El color rojo indica mayor prioridad (mayor % de estudiantes con "
+        "desempeño Bajo). Los municipios en gris no tienen datos en el dataset; "
+        "se muestran para completar la forma del departamento de Antioquia."
+    )
 
 
 # =========================================================================== #
