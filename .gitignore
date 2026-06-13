@@ -1,5 +1,19 @@
-__pycache__/
-.ipynb_checkpoints/
-.vscode/
+# Entorno virtual
 venv/
+.venv/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Secretos / entorno
+.env
+
+# Editores / SO
+.vscode/
+.idea/
 .DS_Store
+Thumbs.db
