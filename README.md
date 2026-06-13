@@ -1,11 +1,11 @@
-# Proyecto Integrador — Diplomado en Desarrollo Web para Analítica de Datos
+# Sistema de clasificación del desempeño en las pruebas Saber 11 (Antioquia)
 
-Análisis de las pruebas **Saber 11° (ICFES)** del periodo 2025-1 para clasificar el
-desempeño de estudiantes de **Antioquia** en niveles **bajo, medio o alto** y explorar su
-relación con factores socioeconómicos.
-
-> **Entrega 1 — Planteamiento.** No incluye modelo entrenado ni frontend; contiene la
-> documentación del problema, la pregunta analítica y la exploración del dataset.
+## Descripción
+Una Secretaría de Educación no cuenta con una herramienta consolidada para identificar
+anticipadamente qué grupos de estudiantes presentan mayor riesgo de desempeño bajo en las
+pruebas Saber 11°. Este proyecto desarrolla una aplicación web analítica que clasifica el
+nivel de desempeño global (Bajo, Medio o Alto) a partir de variables socioeconómicas, para
+apoyar la focalización de programas de refuerzo en los municipios de Antioquia.
 
 ## Pregunta analítica
 ¿Es posible clasificar el nivel de desempeño global (bajo, medio o alto) de un estudiante de
@@ -15,38 +15,64 @@ con el fin de que la secretaría de educación departamental focalice colegios p
 refuerzos en los grupos con mayor riesgo de bajo desempeño?
 
 ## Dataset
-- **Fuente:** ICFES — DataIcfes (https://www.icfes.gov.co/investigaciones/data-icfes/)
+- **Fuente:** ICFES – DataIcfes (https://www.icfes.gov.co/investigaciones/data-icfes/)
 - **Periodo:** 2025-1 (colegios de Antioquia)
-- **Tamaño:** 1.313 registros, 85 columnas (1.109 tras la limpieza)
-- **Variable objetivo:** `desempeno_global` (Bajo / Medio / Alto)
-- **Ubicación:** `data/raw/saber11_2025-1.csv`
+- **Licencia:** datos de acceso público del ICFES; uso académico citando la fuente.
+- **Variables principales:** género, estrato de la vivienda, acceso a internet, nivel
+  educativo de la madre y del padre (entradas); `desempeno_global` (objetivo).
 
-## Tipo de tarea y métrica
-- Clasificación multiclase.
-- Métrica principal: **F1-score macro**.
+## Arquitectura de la solución
+El flujo va desde los datos crudos del ICFES, pasando por la limpieza y el entrenamiento del
+modelo, hasta el dashboard que consume el usuario final. Ver `docs/arquitectura.md` y el
+diagrama `docs/arquitectura.png`.
 
 ## Estructura del repositorio
-```
 .
-├── data/
-│   └── raw/
-│       └── saber11_2025-1.csv      # Dataset original
-├── docs/
-│   ├── ficha_proyecto.md           # Ficha de formulación del proyecto
-│   ├── analisis_dataset.md         # Análisis cualitativo del dataset
-│   └── wireframe_dashboard.png     # Boceto del dashboard
-├── notebooks/
-│   └── 01_exploracion.ipynb        # Exploración y limpieza del dataset
+├── app_final.py                  # Dashboard Streamlit
+├── requirements.txt
 ├── .gitignore
-├── README.md
-└── requirements.txt
-```
+├── data/
+│   ├── raw/                      # Dataset original
+│   ├── processed/                # Dataset limpio
+│   └── antioquia_municipios.geojson
+├── notebooks/
+│   ├── 01_exploracion.ipynb      # Entrega 1
+│   ├── 02_eda_limpieza.ipynb     # Pipeline de limpieza
+│   └── 03_modelado.ipynb         # Entrenamiento y comparación
+├── src/ml/
+│   └── entrenar_modelo.py        # Script de entrenamiento reproducible
+├── models/
+│   ├── modelo_final.pkl          # Modelo serializado
+│   └── model_metadata.json       # Métricas y metadatos
+└── docs/
+    ├── ficha_proyecto.md
+    ├── analisis_dataset.md
+    ├── diccionario_datos.md
+    ├── arquitectura.md
+    ├── arquitectura.png
+    ├── wireframe_dashboard.png
+    └── reflexion_etica.md
 
-## Cómo ejecutar el notebook
-```bash
+
+## Instalación y ejecución
+bash
+python -m venv venv
+# Windows: .\venv\Scripts\Activate.ps1   |   Git Bash: source venv/Scripts/activate
 pip install -r requirements.txt
-jupyter notebook notebooks/01_exploracion.ipynb
-```
+streamlit run app_final.py
+
+
+## Resultados del modelo
+- **Modelo:** Regresión Logística (comparada con Random Forest).
+- **Métrica principal:** F1-score macro = **0.582** (Accuracy ≈ 0.599).
+- La métrica es moderada porque las variables socioeconómicas explican una parte real, pero
+  no total, del desempeño. Detalle en `notebooks/03_modelado.ipynb`.
+
+## Consideraciones éticas
+El modelo asocia el entorno socioeconómico con el desempeño, por lo que debe usarse solo para
+focalizar apoyos, nunca para penalizar o rankear. El resultado es un apoyo a la decisión, no
+una decisión automática. Detalle completo en `docs/reflexion_etica.md`.
 
 ## Autor
-Juan Diego Hoyos Giraldo, estudiante tecnología en desarrollo de software — Diplomado en Desarrollo Web para Analítica de Datos, 2026.
+Juan Diego Hoyos Giraldo — Tecnología en Desarrollo de Software, Diplomado en Desarrollo Web
+para Analítica de Datos. 2026.
