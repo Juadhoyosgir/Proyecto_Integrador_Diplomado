@@ -27,6 +27,7 @@ modelo, hasta el dashboard que consume el usuario final. Ver `docs/arquitectura.
 diagrama `docs/arquitectura.png`.
 
 ## Estructura del repositorio
+```
 .
 ├── app_final.py                  # Dashboard Streamlit
 ├── requirements.txt
@@ -52,15 +53,15 @@ diagrama `docs/arquitectura.png`.
     ├── arquitectura.png
     ├── wireframe_dashboard.png
     └── reflexion_etica.md
-
+```
 
 ## Instalación y ejecución
-bash
+```bash
 python -m venv venv
 # Windows: .\venv\Scripts\Activate.ps1   |   Git Bash: source venv/Scripts/activate
 pip install -r requirements.txt
 streamlit run app_final.py
-
+```
 
 ## Resultados del modelo
 - **Modelo:** Regresión Logística (comparada con Random Forest).
