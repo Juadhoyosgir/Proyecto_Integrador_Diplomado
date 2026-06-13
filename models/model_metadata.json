@@ -1,0 +1,19 @@
+{
+  "modelo": "LogisticRegression",
+  "version": "1.0",
+  "fecha_entrenamiento": "2026-06-13",
+  "metrica_principal": "f1_score_macro",
+  "valor_metrica": 0.582,
+  "accuracy": 0.599,
+  "precision_macro": 0.589,
+  "recall_macro": 0.585,
+  "variables_entrada": [
+    "estu_genero",
+    "fami_estratovivienda",
+    "fami_tieneinternet",
+    "fami_educacionmadre",
+    "fami_educacionpadre"
+  ],
+  "variable_objetivo": "desempeno_global",
+  "observaciones": "Entrenado con scikit-learn 1.9.0, semilla 42."
+}
